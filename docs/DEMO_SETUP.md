@@ -15,7 +15,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. VPT8 Crash Prevention (IMPORTANT!)
+### 2. VPT8 Version Requirements (CRITICAL!)
+
+**IMPORTANT: Use VPT8 Silicon version, NOT the beta!**
+
+- ✅ **macOS**: Use **VPT8 Silicon version** - mix module works correctly
+- ⚠️ **Windows/PC**: **Beta version has broken mix module** - needs PC-compatible VPT8 version
+- ❌ **Avoid**: VPT8 beta (2+ years old) - mix module in source section is non-functional
+
+### 3. VPT8 Crash Prevention (IMPORTANT!)
 **Must do this first to prevent crashes:**
 
 1. **Quit VPT8 completely**
@@ -34,7 +42,7 @@ pip install -r requirements.txt
    framerate 15
    ```
 
-### 3. VPT8 Configuration
+### 4. VPT8 Configuration
 
 #### In VPT8:
 1. **Row 8 Mixer Setup**:
@@ -54,7 +62,7 @@ pip install -r requirements.txt
 4. **Output**:
    - Press **Esc** to fullscreen Output window on projector
 
-### 4. Test System
+### 5. Test System
 ```bash
 # Test OSC mix fader control (should see fader moving in VPT8)
 python scripts/test_osc_vpt.py
@@ -63,7 +71,7 @@ python scripts/test_osc_vpt.py
 python scripts/test_hand_detection_sim.py
 ```
 
-### 5. Run Hand Detection System
+### 6. Run Hand Detection System
 
 #### Production System:
 ```bash

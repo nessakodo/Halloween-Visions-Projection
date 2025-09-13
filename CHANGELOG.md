@@ -93,6 +93,11 @@
 - ✅ `best.pt` - Fine-tuned hand classification model (moved to repo root)
 - ✅ `CHANGELOG.md` - Comprehensive documentation
 
+### VPT8 Version Requirements (CRITICAL!)
+- ✅ **macOS**: Use **VPT8 Silicon version** - mix module works correctly
+- ⚠️ **Windows/PC**: **Beta version has broken mix module** - requires PC-compatible VPT8 update
+- ❌ **Avoid**: VPT8 beta (2+ years old) - mix module in source section is non-functional
+
 ### Current Status: PRODUCTION READY
 The Halloween projection system is now fully functional with real-time hand detection triggering scare effects through VPT8 video mixing.
 

@@ -11,14 +11,20 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure VPT8 (Crash Prevention Required!)
+### 2. VPT8 Version Requirements (CRITICAL!)
+**Use VPT8 Silicon version, NOT the beta!**
+- ✅ **macOS**: VPT8 Silicon version (mix module works)
+- ⚠️ **Windows/PC**: Beta has broken mix module - needs update
+- ❌ **Avoid**: VPT8 beta (2+ years old, non-functional mix module)
+
+### 3. Configure VPT8 (Crash Prevention Required!)
 ```bash
 # IMPORTANT: Disable VIDDLL to prevent crashes
 open /Applications/VPT8.app/Contents/Resources/C74/packages/
 mv VIDDLL VIDDLL.disabled
 ```
 
-### 3. Test System
+### 4. Test System
 ```bash
 # Verify OSC communication
 python scripts/test_osc_vpt.py
@@ -27,7 +33,7 @@ python scripts/test_osc_vpt.py
 python scripts/test_hand_detection_sim.py
 ```
 
-### 4. Run Production System
+### 5. Run Production System
 ```bash
 # Real-time hand detection with preview
 python scripts/yolo_hand_scare_bridge.py --show
