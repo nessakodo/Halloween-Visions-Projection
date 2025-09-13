@@ -77,7 +77,7 @@ class HandScareController:
 
 def parse_args():
     p = argparse.ArgumentParser(description="YOLO Hand Detection → VPT8 Scare System")
-    p.add_argument("--model", default="best.pt", help="YOLO model file")
+    p.add_argument("--model", default="best.pt", help="YOLO model file (hand detection models in models/hand-detection/)")
     p.add_argument("--source", default=0, help="Camera index or video file")
     p.add_argument("--conf", type=float, default=0.5, help="YOLO detection confidence (lower = more detections)")
     p.add_argument("--scare-conf", type=float, default=0.90, help="Confidence threshold for scare trigger")
