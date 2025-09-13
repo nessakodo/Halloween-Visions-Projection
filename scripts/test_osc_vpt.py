@@ -1,43 +1,78 @@
 #!/usr/bin/env python3
 """
-Test OSC communication with VPT
-Make sure VPT is running with OSC enabled on port 6666 before running this
+Test OSC Row 8 Mix Fader Control
+- Load idle video in one input to row 8
+- Load scare video in another input to row 8
+- Control the mix fader on row 8 to blend between them
+- Route row 8 to projection layer
 """
 
 import time
+import threading
 from pythonosc.udp_client import SimpleUDPClient
 
+HOST, PORT = "127.0.0.1", 6666
+client = SimpleUDPClient(HOST, PORT)
+lock = threading.Lock()
+
+def control_mix_fader(mix_value, delay=0.5):
+    """
+    Control row 8 mix fader
+    mix_value: 0.0 to 1.0 (0.0 = first input, 1.0 = second input)
+    """
+    with lock:
+        print(f"Setting row 8 mix fader to {mix_value}")
+        # Try different possible OSC paths for row 8 mix
+        client.send_message("/sources/8video/mixfader", float(mix_value))
+        client.send_message("/sources/8video/mix", float(mix_value))
+        client.send_message("/sources/8/mixfader", float(mix_value))
+        client.send_message("/sources/8/mix", float(mix_value))
+        client.send_message("/8video/mixfader", float(mix_value))
+        client.send_message("/8video/mix", float(mix_value))
+        time.sleep(delay)
+
 def main():
-    print("Testing OSC communication with VPT...")
-    print("Make sure VPT is running with OSC enabled on port 6666!")
-    print("Watch the VPT OSC monitor to see if messages are received.")
+    print("Testing OSC Row 8 Mix Fader Control...")
+    print("Setup required:")
+    print("1. Route idle video to one input of row 8 mixer")
+    print("2. Route scare video to another input of row 8 mixer") 
+    print("3. Route row 8 output to your projection layer")
+    print("4. OSC enabled on port 6666")
+    print("5. Watch the mix fader on row 8 move")
     print()
     
     try:
-        # Create OSC client
-        client = SimpleUDPClient("127.0.0.1", 6666)
         print("✓ OSC client created")
+        print("Testing row 8 mix fader control...")
+        print("(Trying multiple OSC path variations)")
+        print()
         
-        # Send test messages
-        print("\nSending test messages...")
+        print("1. Full first input (mix = 0.0)")
+        control_mix_fader(0.0, delay=3.0)
         
-        print("1. Switching to clip 1 (idle)")
-        client.send_message("/sources/1video/clipnr", 1)
-        client.send_message("/sources/1video/start", [])
-        time.sleep(2)
+        print("2. Full second input (mix = 1.0)")
+        control_mix_fader(1.0, delay=3.0)
         
-        print("2. Switching to clip 2 (scare)")
-        client.send_message("/sources/1video/clipnr", 2)
-        client.send_message("/sources/1video/start", [])
-        time.sleep(2)
+        print("3. 50/50 mix (mix = 0.5)")
+        control_mix_fader(0.5, delay=3.0)
         
-        print("3. Back to clip 1 (idle)")
-        client.send_message("/sources/1video/clipnr", 1)
-        client.send_message("/sources/1video/start", [])
+        print("4. Back to first input (mix = 0.0)")
+        control_mix_fader(0.0, delay=3.0)
         
-        print("\n✓ Test messages sent successfully!")
-        print("Check VPT to see if the clips switched.")
-        print("If VPT shows 'Receiving OSC' messages, communication is working!")
+        print("5. Smooth crossfade animation")
+        for i in range(21):
+            mix_val = i / 20.0  # 0.0 to 1.0 in 21 steps
+            print(f"   Mix = {mix_val:.2f}")
+            control_mix_fader(mix_val, delay=0.2)
+        
+        print("6. Quick scare effects")
+        for _ in range(3):
+            control_mix_fader(1.0, delay=0.1)  # Flash to scare
+            control_mix_fader(0.0, delay=0.5)  # Back to idle
+        
+        print("\n✓ Row 8 mix fader test completed!")
+        print("Check VPT8 to see if the row 8 mix fader moved.")
+        print("If the fader moved but no visual change, check your routing.")
         
     except Exception as e:
         print(f"✗ OSC test failed: {e}")
