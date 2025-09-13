@@ -29,8 +29,8 @@ class HandScareController:
         
         # Scare system parameters
         self.state = "idle"  # "idle" or "scare"
-        self.confidence_threshold = 0.95  # 90% confidence required
-        self.scare_duration = 2.0  # seconds to stay in scare mode
+        self.confidence_threshold = 0.99  # 99% confidence required
+        self.scare_duration = 0.0  # seconds to stay in scare mode
         self.last_trigger = 0.0
         
         logging.info(f"HandScareController initialized")
