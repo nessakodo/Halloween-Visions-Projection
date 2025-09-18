@@ -98,6 +98,44 @@
 - ⚠️ **Windows/PC**: **Beta version has broken mix module** - requires PC-compatible VPT8 update
 - ❌ **Avoid**: VPT8 beta (2+ years old) - mix module in source section is non-functional
 
+## 2025-09-17: Camera Selection & Enhanced Documentation 📷
+
+### Camera Selection System
+- ✅ **`--list-cameras` flag**: Automatic discovery of available cameras
+- ✅ **Flexible camera selection**: `--source 0` (built-in), `--source 1` (external), etc.
+- ✅ **Automatic fallback**: Falls back to built-in camera when external camera fails
+- ✅ **Enhanced error handling**: Helpful troubleshooting messages with specific suggestions
+
+### Error Handling Improvements
+- ✅ **Consecutive failure detection**: 5-strike limit before giving up on camera
+- ✅ **Camera validation**: Tests frame reading during initialization
+- ✅ **Graceful fallback**: Automatic switch to working camera when selected fails
+- ✅ **Actionable error messages**: Clear guidance with emoji indicators
+
+### Documentation Overhaul
+- ✅ **README.md updates**: Complete camera selection workflow added
+- ✅ **DEMO_SETUP.md enhancements**: Detailed camera setup and troubleshooting sections
+- ✅ **Comprehensive troubleshooting**: Camera-specific issue resolution
+- ✅ **Updated demo checklist**: Camera setup tasks and verification steps
+
+### Production Features
+- **Camera Discovery**: `python scripts/yolo_hand_scare_bridge.py --list-cameras`
+- **Preview Mode**: `--show` flag for setup and testing
+- **Production Mode**: No preview for optimal performance
+- **Video File Support**: Can use video files instead of cameras for testing
+
+### Usage Examples Added
+```bash
+# Discover cameras
+python scripts/yolo_hand_scare_bridge.py --list-cameras
+
+# Setup with external camera
+python scripts/yolo_hand_scare_bridge.py --source 1 --show
+
+# Production with external camera
+python scripts/yolo_hand_scare_bridge.py --source 1
+```
+
 ### Current Status: PRODUCTION READY
 The Halloween projection system is now fully functional with real-time hand detection triggering scare effects through VPT8 video mixing.
 

@@ -1,61 +1,48 @@
 # Halloween Hand Detection Projection System 🎃👻
 
-Real-time **hand detection** triggers **scare effects** in **VPT8** projection mapping. Wave your hand to activate spooky Halloween projections!
+## Quick start
+1) Install **Git LFS** for video file support: `git lfs install`
+2) Create and activate a Python virtualenv (see DEMO_SETUP.md)  
+3) Install requirements  
+4) Use **VPT8 Mac version** (Intel build under Rosetta) - do **not** use VPT8 Silicon beta  
+5) Remove VIDDLL package (see DEMO_SETUP.md)  
+6) Configure sources and mix (1video, 2video, 8mix) and assign **8video** to your layer  
+7) Run the YOLO→OSC bridge
 
-## 🚀 Quick Start
+### VPT8 setup (confirmed)
+- Row 1 = idle (1video, On, Loop)
+- Row 2 = scare (2video, On, Loop)
+- Row 8 = mix (On, A=1video, B=2video, mode=mix)
+- Layer = Source=**8video**, **fade=1.0**
+- Bottom bar: blackout off
+- **Row 8 thumbnail reflects the mix** on the working Mac version
 
-### 1. Setup Environment
+### OSC integration
 ```bash
-cd "/Users/colinrooney/Dev/Active Projects/Halloween-Visions"
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+# Priming
+/sources/1video/on 1
+/sources/2video/on 1
+/sources/8mix/on 1
+
+# Crossfade
+/sources/8mix/mix 0.0   # Idle
+/sources/8mix/mix 1.0   # Scare
+```
+Float 0.0–1.0 crossfades; send ramps for smooth transitions.
+
+### Run
+```bash
+python scripts/yolo_hand_scare_bridge.py --show   # with preview
+python scripts/yolo_hand_scare_bridge.py          # headless
 ```
 
-### 2. VPT8 Version Requirements (CRITICAL!)
-**Use VPT8 Silicon version, NOT the beta!**
-- ✅ **macOS**: VPT8 Silicon version (mix module works)
-- ⚠️ **Windows/PC**: Beta has broken mix module - needs update
-- ❌ **Avoid**: VPT8 beta (2+ years old, non-functional mix module)
+### Notes
+- VPT8 Silicon beta's Mix module is broken; do not use it.
+- Mapping and masks are applied at the **layer** level; the mix is just the layer's source.
 
-### 3. Configure VPT8 (Crash Prevention Required!)
-```bash
-# IMPORTANT: Disable VIDDLL to prevent crashes
-open /Applications/VPT8.app/Contents/Resources/C74/packages/
-mv VIDDLL VIDDLL.disabled
-```
-
-### 4. Choose Camera Source
-```bash
-# Discover available cameras
-python scripts/yolo_hand_scare_bridge.py --list-cameras
-
-# Test with built-in camera (default)
-python scripts/yolo_hand_scare_bridge.py --source 0 --show
-
-# Test with external camera  
-python scripts/yolo_hand_scare_bridge.py --source 1 --show
-```
-
-### 5. Test System
-```bash
-# Verify OSC communication
-python scripts/test_osc_vpt.py
-
-# Test hand detection simulation
-python scripts/test_hand_detection_sim.py
-```
-
-### 6. Run Production System
-```bash
-# Production mode with built-in camera (no preview)
-python scripts/yolo_hand_scare_bridge.py
-
-# Production mode with external camera
-python scripts/yolo_hand_scare_bridge.py --source 1
-
-# Preview mode (with video window for setup)
-python scripts/yolo_hand_scare_bridge.py --source 1 --show
-```
+### 🎥 Visual Setup Guide
+<!-- ![Hand Detection Demo](docs/images/halloween-hand-detection-demo.gif) -->
+**See [Visual Setup Guide](docs/images/) for VPT8 configuration screenshots**
 
 ## 🎬 How It Works
 
@@ -100,9 +87,9 @@ python scripts/yolo_hand_scare_bridge.py --source 1 --show
 │   ├── test_osc_vpt.py                # 🔗 OSC communication test
 │   ├── test_dependencies.py           # ✅ System verification
 │   └── create_test_media.py           # 🎬 Media generation utility
-├── media/                             # 🎥 Production media
-│   ├── idle.mp4                       # 😴 Calm state video
-│   └── scare.mp4                      # 😱 Scare effect video
+├── media/                             # 🎥 Production media (stored with Git LFS)
+│   ├── scare_awake.mp4                # 😱 Scare effect video
+│   └── sleep_.mp4                     # 😴 Calm state video
 ├── models/                            # 🧠 YOLO models organized
 │   ├── hand-detection/                # 🖐️ Fine-tuned hand models
 │   │   ├── best_final.pt              # Alternative versions
@@ -204,6 +191,9 @@ IDLE (mix=0.0) → Hand Detection (≥95% conf) → SCARE (mix=1.0)
 - **[Complete Setup Guide](docs/DEMO_SETUP.md)** - Detailed configuration and troubleshooting
 - **[Development History](CHANGELOG.md)** - Full development timeline and technical decisions
 
+### 🎥 Viewing Media Files
+Workshop demonstration videos are included and shared via **Git LFS**. For previewing video files and images in VS Code, install the [Video Preview extension](https://marketplace.visualstudio.com/items?itemName=BatchNepal.vscode-video-preview).
+
 ## 🎯 Demo Day Checklist
 
 - [ ] ✅ VPT8 VIDDLL disabled (crash prevention)
@@ -226,4 +216,5 @@ The Halloween hand detection projection system is **fully operational** and **ba
 
 ---
 
-*Built with YOLO11, VPT8, and lots of Halloween spirit From the DenHac Haloween Crew! 🎃*
+*Built with YOLO, VPT8, RunPod, and lots of Halloween spirit From the ML Visions Projects DenHac Haloween Crew!
+Special Thanks to Mike CodeZero and Patrick Cromer for their efforts 🎃*
