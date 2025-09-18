@@ -30,10 +30,15 @@ wheels/
 *.webm
 *.mkv
 
-# Large images
+# Large images (but allow documentation images)
 *.tiff
 *.tif
 *.bmp
+
+# Allow documentation images
+!docs/images/*.png
+!docs/images/*.jpg
+!docs/images/*.gif
 
 # Model files (large)
 *.pt
@@ -65,3 +70,9 @@ logs/
 tmp/
 temp/
 .tmp/
+
+# Claude Code
+.claude/
+
+# Development files
+CHANGELOG.md
