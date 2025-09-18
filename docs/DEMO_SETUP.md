@@ -62,7 +62,33 @@ pip install -r requirements.txt
 4. **Output**:
    - Press **Esc** to fullscreen Output window on projector
 
-### 5. Test System
+### 5. Camera Setup and Selection
+
+#### Discover Available Cameras:
+```bash
+# Scan for all working cameras
+python scripts/yolo_hand_scare_bridge.py --list-cameras
+```
+
+#### Test Camera Selection:
+```bash
+# Test built-in laptop camera (usually camera 0)
+python scripts/yolo_hand_scare_bridge.py --source 0 --show
+
+# Test external/USB camera (usually camera 1)
+python scripts/yolo_hand_scare_bridge.py --source 1 --show
+
+# Test additional cameras if available
+python scripts/yolo_hand_scare_bridge.py --source 2 --show
+```
+
+**Camera Selection Tips:**
+- **Built-in camera**: Usually good for close-range detection
+- **External USB camera**: Often better for projection mapping setups
+- **Positioning**: Place camera where it can clearly see the target area
+- **Lighting**: Ensure good lighting for best detection accuracy
+
+### 6. Test System
 ```bash
 # Test OSC mix fader control (should see fader moving in VPT8)
 python scripts/test_osc_vpt.py
@@ -71,18 +97,21 @@ python scripts/test_osc_vpt.py
 python scripts/test_hand_detection_sim.py
 ```
 
-### 6. Run Hand Detection System
+### 7. Run Hand Detection System
 
 #### Production System:
 ```bash
-# Real-time hand detection with video preview
-python scripts/yolo_hand_scare_bridge.py --show
-
-# Production mode (no preview for better performance)
+# Production mode with built-in camera (no preview)
 python scripts/yolo_hand_scare_bridge.py
 
+# Production mode with external camera
+python scripts/yolo_hand_scare_bridge.py --source 1
+
+# Preview mode for setup (shows detection window)
+python scripts/yolo_hand_scare_bridge.py --source 1 --show
+
 # Debug mode for troubleshooting
-python scripts/yolo_hand_scare_bridge.py --show --debug
+python scripts/yolo_hand_scare_bridge.py --source 1 --show --debug
 ```
 
 ## 🎬 Demo Flow
@@ -97,7 +126,8 @@ python scripts/yolo_hand_scare_bridge.py --show --debug
 
 ### Hand Detection Script Parameters
 - `--model`: YOLO model (default: `best.pt` - fine-tuned hand classifier)
-- `--source`: Camera index (0, 1, 2...) or video file path
+- `--source`: Camera index (0=built-in, 1=external, etc.) or video file path
+- `--list-cameras`: List all available cameras and exit (for discovery)
 - `--scare-conf`: Confidence threshold for scare trigger (default: 0.95)
 - `--scare-duration`: Seconds in scare mode (default: 2.0)
 - `--show`: Display detection window with confidence overlay
@@ -144,9 +174,12 @@ python scripts/yolo_hand_scare_bridge.py --show --source 1
    - ✅ **FIXED**: VIDDLL disabled, using AVFoundation
    - Ensure VIDDLL folder is renamed to `VIDDLL.disabled`
 
-2. **"Cannot open camera"**:
-   - Try different camera indices: `--source 1`, `--source 2`
-   - Check camera permissions in macOS System Preferences
+2. **Camera Issues**:
+   - **"Cannot open camera"**: Run `--list-cameras` first to see available options
+   - **Wrong camera**: Try `--source 1`, `--source 2` for external cameras
+   - **Permission denied**: Check macOS Camera permissions in System Preferences
+   - **USB camera not detected**: Unplug/replug USB cable, try different port
+   - **Camera shows black screen**: Check if another app is using the camera
 
 3. **No OSC response in VPT8**:
    - Check OSC monitor shows incoming messages
@@ -182,15 +215,34 @@ python scripts/test_osc_vpt.py
 
 ## 📋 Demo Day Checklist
 
+### Pre-Setup
 - [ ] VPT8 VIDDLL disabled (prevents crashes)
 - [ ] VPT8 preferences updated (preview=0, framerate=15)
-- [ ] Row 8 mixer configured with idle/scare videos
-- [ ] OSC communication tested and working
-- [ ] Camera positioned and tested
-- [ ] Hand detection model (`best.pt`) loaded and tested
-- [ ] Projector/output configured and tested
-- [ ] Backup procedures known (Ctrl+C to stop)
+- [ ] VPT8 Silicon version installed (not beta)
+
+### Camera Setup
+- [ ] Camera discovery completed (`--list-cameras`)
+- [ ] Optimal camera selected (built-in vs external)
+- [ ] Camera positioning optimized for target area
+- [ ] Camera permissions granted in macOS
 - [ ] Lighting optimized for hand detection
+
+### VPT8 Configuration
+- [ ] Row 8 mixer configured with idle/scare videos
+- [ ] OSC communication tested and working (`test_osc_vpt.py`)
+- [ ] Mix fader responds to OSC commands
+- [ ] Projector/output configured and tested
+
+### Hand Detection System
+- [ ] Hand detection model (`best.pt`) loaded and tested
+- [ ] Confidence threshold calibrated (default 95%)
+- [ ] Detection tested with selected camera (`--show`)
+- [ ] Production mode tested without preview
+
+### Emergency Procedures
+- [ ] Backup procedures known (Ctrl+C to stop)
+- [ ] Manual reset procedure tested (`test_osc_vpt.py`)
+- [ ] Alternative camera indices identified
 
 ## 🚨 Emergency Procedures
 
