@@ -22,6 +22,52 @@ logging.basicConfig(
     datefmt='%H:%M:%S'
 )
 
+def list_available_cameras():
+    """Detect and list available cameras"""
+    available_cameras = []
+    
+    print("🔍 Scanning for available cameras...")
+    
+    for index in range(6):  # Check camera indices 0-5
+        try:
+            cap = cv2.VideoCapture(index)
+            if cap.isOpened():
+                ret, frame = cap.read()
+                if ret and frame is not None:
+                    height, width = frame.shape[:2]
+                    available_cameras.append({
+                        'index': index,
+                        'resolution': f"{width}x{height}",
+                        'status': 'Working'
+                    })
+                    print(f"  📷 Camera {index}: {width}x{height} - ✅ Working")
+                else:
+                    print(f"  📷 Camera {index}: ❌ Can't read frames")
+                cap.release()
+            # Don't show failed cameras to reduce noise
+        except Exception:
+            # Handle any camera access errors silently
+            pass
+    
+    if not available_cameras:
+        print("  ❌ No working cameras found")
+        print("\n💡 Troubleshooting:")
+        print("     • Check camera permissions in System Preferences")
+        print("     • Ensure no other app is using cameras")
+        print("     • Try unplugging/replugging USB cameras")
+    else:
+        print(f"\n✅ Found {len(available_cameras)} working camera(s)")
+        print("\nUsage examples:")
+        for cam in available_cameras:
+            if cam['index'] == 0:
+                print(f"  # Use built-in camera (default)")
+                print(f"  python scripts/yolo_hand_scare_bridge.py --show")
+            else:
+                print(f"  # Use external camera {cam['index']}")
+                print(f"  python scripts/yolo_hand_scare_bridge.py --source {cam['index']} --show")
+    
+    return available_cameras
+
 class HandScareController:
     def __init__(self, vpt_host="127.0.0.1", vpt_port=6666):
         self.client = SimpleUDPClient(vpt_host, vpt_port)
@@ -78,7 +124,8 @@ class HandScareController:
 def parse_args():
     p = argparse.ArgumentParser(description="YOLO Hand Detection → VPT8 Scare System")
     p.add_argument("--model", default="best.pt", help="YOLO model file (hand detection models in models/hand-detection/)")
-    p.add_argument("--source", default=0, help="Camera index or video file")
+    p.add_argument("--source", default=0, help="Camera index (0=built-in, 1=external, etc.) or video file")
+    p.add_argument("--list-cameras", action="store_true", help="List available cameras and exit")
     p.add_argument("--conf", type=float, default=0.5, help="YOLO detection confidence (lower = more detections)")
     p.add_argument("--scare-conf", type=float, default=0.90, help="Confidence threshold for scare trigger")
     p.add_argument("--scare-duration", type=float, default=2.0, help="Scare duration in seconds")
@@ -90,6 +137,11 @@ def parse_args():
 
 def main():
     args = parse_args()
+    
+    # Handle camera listing
+    if args.list_cameras:
+        list_available_cameras()
+        return 0
     
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -125,7 +177,14 @@ def main():
     controller.set_mix_fader(0.0)
     time.sleep(1)
     
-    logging.info(f"Camera source: {args.source}")
+    # Set up video source - ensure camera index is integer
+    try:
+        src = int(args.source)
+        logging.info(f"Camera source: {src}")
+    except ValueError:
+        src = args.source
+        logging.info(f"Video file source: {src}")
+        
     logging.info(f"YOLO confidence: {args.conf}")
     logging.info(f"Scare confidence: {args.scare_conf:.0%}")
     logging.info("Press 'q' or ESC to quit (when --show enabled), or Ctrl+C")
@@ -136,19 +195,56 @@ def main():
     try:
         # For classification, we need to process frames one by one
         import cv2 as cv_capture
-        cap = cv_capture.VideoCapture(args.source)
+        cap = cv_capture.VideoCapture(src)
         
         if not cap.isOpened():
-            logging.error(f"Could not open camera/video source: {args.source}")
+            logging.error(f"❌ Could not open camera/video source: {src}")
+            
+            # Try fallback cameras if using camera index
+            if isinstance(src, int) and src != 0:
+                logging.info("🔄 Attempting fallback to built-in camera (index 0)...")
+                cap = cv_capture.VideoCapture(0)
+                if cap.isOpened():
+                    logging.warning("⚠️  Using built-in camera as fallback")
+                    src = 0
+                else:
+                    logging.error("❌ Fallback camera also failed")
+                    logging.error("💡 Try running --list-cameras to see available options")
+                    return 1
+            else:
+                logging.error("💡 Suggestions:")
+                logging.error("   • Run --list-cameras to see available cameras")
+                logging.error("   • Check camera permissions in System Preferences")
+                logging.error("   • Try different camera index: --source 1, --source 2")
+                logging.error("   • Ensure no other app is using the camera")
+                return 1
+            
+        # Test camera by reading a frame
+        ret, test_frame = cap.read()
+        if not ret:
+            logging.error(f"❌ Camera {src} opened but cannot read frames")
+            logging.error("💡 Try a different camera or check camera connection")
             return 1
             
-        logging.info("✓ Camera/video source opened successfully")
+        logging.info(f"✅ Camera {src} opened successfully ({test_frame.shape[1]}x{test_frame.shape[0]})")
+        
+        consecutive_failures = 0
+        max_failures = 5
         
         while True:
             ret, frame = cap.read()
             if not ret:
-                logging.warning("Failed to read frame, retrying...")
+                consecutive_failures += 1
+                if consecutive_failures >= max_failures:
+                    logging.error(f"❌ Camera failed to read {max_failures} consecutive frames")
+                    logging.error("💡 Camera may have disconnected or been claimed by another app")
+                    break
+                logging.warning(f"⚠️  Failed to read frame ({consecutive_failures}/{max_failures}), retrying...")
+                time.sleep(0.1)
                 continue
+            
+            # Reset failure counter on successful read
+            consecutive_failures = 0
                 
             frame_count += 1
             

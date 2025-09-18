@@ -24,7 +24,19 @@ open /Applications/VPT8.app/Contents/Resources/C74/packages/
 mv VIDDLL VIDDLL.disabled
 ```
 
-### 4. Test System
+### 4. Choose Camera Source
+```bash
+# Discover available cameras
+python scripts/yolo_hand_scare_bridge.py --list-cameras
+
+# Test with built-in camera (default)
+python scripts/yolo_hand_scare_bridge.py --source 0 --show
+
+# Test with external camera  
+python scripts/yolo_hand_scare_bridge.py --source 1 --show
+```
+
+### 5. Test System
 ```bash
 # Verify OSC communication
 python scripts/test_osc_vpt.py
@@ -33,13 +45,16 @@ python scripts/test_osc_vpt.py
 python scripts/test_hand_detection_sim.py
 ```
 
-### 5. Run Production System
+### 6. Run Production System
 ```bash
-# Real-time hand detection with preview
-python scripts/yolo_hand_scare_bridge.py --show
-
-# Production mode (no preview)
+# Production mode with built-in camera (no preview)
 python scripts/yolo_hand_scare_bridge.py
+
+# Production mode with external camera
+python scripts/yolo_hand_scare_bridge.py --source 1
+
+# Preview mode (with video window for setup)
+python scripts/yolo_hand_scare_bridge.py --source 1 --show
 ```
 
 ## 🎬 How It Works
@@ -57,6 +72,12 @@ python scripts/yolo_hand_scare_bridge.py
 - **95% confidence threshold** prevents false positives
 - **Real-time processing** at 30+ FPS
 - **Any camera resolution** supported (auto-resized)
+
+### 📷 Camera Selection
+- **Automatic camera discovery** - scan for available cameras
+- **Flexible source selection** - built-in, external, or video files
+- **Easy switching** between laptop and USB cameras
+- **Preview mode** to test camera positioning and detection
 
 ### 🎥 VPT8 Integration  
 - **Mix fader control** via OSC (row 8 mixer)
@@ -105,11 +126,27 @@ python scripts/yolo_hand_scare_bridge.py
 python scripts/yolo_hand_scare_bridge.py [OPTIONS]
 
 --model           YOLO model file (default: best.pt)
---source          Camera index or video file (default: 0)
+--source          Camera index (0=built-in, 1=external) or video file (default: 0)
+--list-cameras    List available cameras and exit
 --scare-conf      Confidence threshold for scare (default: 0.95)
 --scare-duration  Scare duration in seconds (default: 2.0)
---show            Display detection window
+--show            Display detection window with confidence overlay
 --debug           Enable verbose logging
+```
+
+### Camera Selection Examples
+```bash
+# Discover cameras
+python scripts/yolo_hand_scare_bridge.py --list-cameras
+
+# Use built-in laptop camera
+python scripts/yolo_hand_scare_bridge.py --source 0 --show
+
+# Use external USB camera
+python scripts/yolo_hand_scare_bridge.py --source 1 --show
+
+# Use video file for testing
+python scripts/yolo_hand_scare_bridge.py --source /path/to/video.mp4 --show
 ```
 
 ### VPT8 Setup
@@ -141,11 +178,21 @@ IDLE (mix=0.0) → Hand Detection (≥95% conf) → SCARE (mix=1.0)
 
 ## 🛠️ Troubleshooting
 
-### Common Solutions
-- **Camera issues**: Try `--source 1` or check permissions
-- **VPT8 crashes**: Ensure VIDDLL is disabled 
-- **No detection**: Lower `--scare-conf 0.90` or improve lighting
+### Camera Issues
+- **"Cannot open camera"**: Run `--list-cameras` to see available options
+- **Wrong camera**: Try `--source 1`, `--source 2`, etc.
+- **Permission denied**: Check macOS Camera permissions in System Preferences
+- **USB camera not working**: Unplug/replug, try different USB port
+
+### Detection Issues  
+- **No hand detection**: Lower `--scare-conf 0.90` or improve lighting
 - **False triggers**: Increase `--scare-conf 0.98` or adjust camera angle
+- **Poor accuracy**: Ensure good lighting, clean camera lens
+
+### VPT8 Issues
+- **VPT8 crashes**: Ensure VIDDLL is disabled (renamed to VIDDLL.disabled)
+- **No OSC response**: Check VPT8 OSC monitor shows incoming messages
+- **Mix fader not moving**: Verify row 8 mixer setup with test script
 
 ### Emergency Procedures
 - **Stop script**: Press Ctrl+C
@@ -179,4 +226,4 @@ The Halloween hand detection projection system is **fully operational** and **ba
 
 ---
 
-*Built with YOLO11, VPT8, and lots of Halloween spirit! 🎃*
+*Built with YOLO11, VPT8, and lots of Halloween spirit From the DenHac Haloween Crew! 🎃*
