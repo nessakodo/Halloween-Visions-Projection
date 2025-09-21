@@ -74,10 +74,7 @@ python setup_macos_midi.py
 
 ```
 ├── scripts/                           # 🚀 Production scripts
-│   ├── yolo_hand_scare_bridge.py      # 🎯 Main production script (MIDI + OSC)
-│   ├── test_hand_detection_sim.py     # 🧪 Detection simulation
-│   ├── test_dependencies.py           # ✅ System verification
-│   └── create_test_media.py           # 🎬 Media generation utility
+│   └── yolo_hand_scare_bridge.py      # 🎯 Main production script (MIDI + OSC)
 ├── send_midi_test.py                  # 🎹 MIDI testing utility
 ├── setup_macos_midi.py                # 🍎 macOS MIDI configuration helper
 ├── test_midi_port.py                  # 🔍 MIDI port diagnostics
