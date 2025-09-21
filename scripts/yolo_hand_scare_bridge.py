@@ -14,6 +14,7 @@ import threading
 from ultralytics import YOLO
 from pythonosc.udp_client import SimpleUDPClient
 import cv2
+import mido
 
 # Set up logging
 logging.basicConfig(
@@ -69,8 +70,39 @@ def list_available_cameras():
     return available_cameras
 
 class HandScareController:
-    def __init__(self, vpt_host="127.0.0.1", vpt_port=6666):
-        self.client = SimpleUDPClient(vpt_host, vpt_port)
+    def __init__(self, heavym_host="127.0.0.1", heavym_port=7000, use_midi=True):
+        # OSC setup (for Pro version)
+        self.client = SimpleUDPClient(heavym_host, heavym_port)
+        
+        # MIDI setup (for Demo version)
+        self.use_midi = use_midi
+        self.midi_out = None
+        if use_midi:
+            try:
+                # Try to find IAC Driver or YOLO-HeavyM port
+                available_ports = mido.get_output_names()
+                port_name = None
+                
+                # Look for specific port names (in order of preference)
+                for candidate in ['YOLO-HeavyM', 'IAC Driver YOLO-HeavyM', 'IAC Driver Bus 1']:
+                    if candidate in available_ports:
+                        port_name = candidate
+                        break
+                
+                if port_name:
+                    self.midi_out = mido.open_output(port_name)
+                    logging.info(f"✓ MIDI connected to '{port_name}'")
+                else:
+                    # Fallback: try to create virtual port
+                    self.midi_out = mido.open_output('YOLO-HeavyM Bridge', virtual=True)
+                    logging.info("✓ MIDI virtual port 'YOLO-HeavyM Bridge' created")
+                    
+            except Exception as e:
+                logging.warning(f"⚠️  MIDI setup failed: {e}")
+                logging.warning("💡 Setup IAC Driver: Audio MIDI Setup > IAC Driver > Device is online")
+                logging.warning(f"💡 Available ports: {mido.get_output_names()}")
+                self.use_midi = False
+        
         self.lock = threading.Lock()
         
         # Scare system parameters
@@ -79,20 +111,46 @@ class HandScareController:
         self.scare_duration = 0.0  # seconds to stay in scare mode
         self.last_trigger = 0.0
         
+        # MIDI note assignments
+        self.midi_note_sleep = 60  # C4 for sleep sequence
+        self.midi_note_scare = 61  # C#4 for scare sequence
+        
         logging.info(f"HandScareController initialized")
         logging.info(f"Confidence threshold: {self.confidence_threshold:.0%}")
         logging.info(f"Scare duration: {self.scare_duration}s")
+        logging.info(f"MIDI enabled: {self.use_midi}")
+        if self.use_midi:
+            logging.info(f"MIDI notes: Sleep={self.midi_note_sleep} (C4), Scare={self.midi_note_scare} (C#4)")
+    
+    def cleanup(self):
+        """Clean up MIDI resources"""
+        if self.midi_out:
+            self.midi_out.close()
+            logging.info("MIDI port closed")
         
-    def set_mix_fader(self, value):
-        """Control the row 8 mix fader (0.0=idle, 1.0=scare)"""
+    def set_sequence(self, value: float):
+        """Switch HeavyM sequence: 0.0 = Idle (sleepseq), 1.0 = Scare (scareseq)"""
         with self.lock:
-            # Use all the proven working OSC paths
-            self.client.send_message("/sources/8video/mixfader", float(value))
-            self.client.send_message("/sources/8video/mix", float(value))
-            self.client.send_message("/sources/8/mixfader", float(value))
-            self.client.send_message("/sources/8/mix", float(value))
-            self.client.send_message("/8video/mixfader", float(value))
-            self.client.send_message("/8video/mix", float(value))
+            if self.use_midi and self.midi_out:
+                # MIDI mode (for Demo version)
+                note = self.midi_note_sleep if value == 0.0 else self.midi_note_scare
+                seq_name = "sleepseq" if value == 0.0 else "scareseq"
+                
+                # Send MIDI note on
+                msg = mido.Message('note_on', channel=0, note=note, velocity=127)
+                self.midi_out.send(msg)
+                logging.info(f"MIDI → Note {note} ({'C4' if note == 60 else 'C#4'}) ON (velocity 127) → {seq_name}")
+                
+                # Optional: Send note off after short delay
+                time.sleep(0.1)  # 100ms note duration
+                msg_off = mido.Message('note_off', channel=0, note=note, velocity=0)
+                self.midi_out.send(msg_off)
+                logging.info(f"MIDI → Note {note} ({'C4' if note == 60 else 'C#4'}) OFF")
+            else:
+                # OSC mode (for Pro version fallback)
+                seq = "sleepseq" if value == 0.0 else "scareseq"
+                logging.info(f"OSC → {self.client._address}:{self.client._port} /sequences/{seq}/play 1.0")
+                self.client.send_message(f"/sequences/{seq}/play", 1.0)
     
     def process_classification(self, result):
         """Process YOLO classification result and trigger scare if hand detected with high confidence"""
@@ -106,13 +164,13 @@ class HandScareController:
         if class_name == 'hand' and confidence >= self.confidence_threshold and self.state != "scare":
             logging.info(f"🖐️  HAND DETECTED! Confidence: {confidence:.1%}")
             logging.info("   → Triggering SCARE mode")
-            self.set_mix_fader(1.0)  # Switch to scare video
+            self.set_sequence(1.0)  # Switch to scare video
             self.state = "scare"
             self.last_trigger = now
             
         elif self.state == "scare" and (now - self.last_trigger) >= self.scare_duration:
             logging.info("   → SCARE timeout, returning to IDLE mode")
-            self.set_mix_fader(0.0)  # Switch back to idle
+            self.set_sequence(0.0)  # Switch back to idle
             self.state = "idle"
         
         return {
@@ -122,15 +180,17 @@ class HandScareController:
         }
 
 def parse_args():
-    p = argparse.ArgumentParser(description="YOLO Hand Detection → VPT8 Scare System")
+    p = argparse.ArgumentParser(description="YOLO Hand Detection → HeavyM Scare System")
     p.add_argument("--model", default="best.pt", help="YOLO model file (hand detection models in models/hand-detection/)")
     p.add_argument("--source", default=0, help="Camera index (0=built-in, 1=external, etc.) or video file")
     p.add_argument("--list-cameras", action="store_true", help="List available cameras and exit")
     p.add_argument("--conf", type=float, default=0.5, help="YOLO detection confidence (lower = more detections)")
     p.add_argument("--scare-conf", type=float, default=0.90, help="Confidence threshold for scare trigger")
     p.add_argument("--scare-duration", type=float, default=2.0, help="Scare duration in seconds")
-    p.add_argument("--vpt-host", default="127.0.0.1", help="VPT8 host")
-    p.add_argument("--vpt-port", type=int, default=6666, help="VPT8 OSC port")
+    p.add_argument("--heavym-host", default="127.0.0.1", help="HeavyM host")
+    p.add_argument("--heavym-port", type=int, default=7000, help="HeavyM OSC port")
+    p.add_argument("--use-midi", action="store_true", default=True, help="Use MIDI output (default: True for Demo compatibility)")
+    p.add_argument("--use-osc", action="store_true", help="Use OSC output instead of MIDI (for Pro version)")
     p.add_argument("--show", action="store_true", help="Show video window with detections")
     p.add_argument("--debug", action="store_true", help="Enable debug logging")
     return p.parse_args()
@@ -168,13 +228,14 @@ def main():
         return 1
     
     # Initialize scare controller
-    controller = HandScareController(args.vpt_host, args.vpt_port)
+    use_midi = args.use_midi and not args.use_osc  # Use MIDI unless OSC explicitly requested
+    controller = HandScareController(args.heavym_host, args.heavym_port, use_midi=use_midi)
     controller.confidence_threshold = args.scare_conf
     controller.scare_duration = args.scare_duration
     
     # Start in idle state
     logging.info("Starting in IDLE state...")
-    controller.set_mix_fader(0.0)
+    controller.set_sequence(0.0)
     time.sleep(1)
     
     # Set up video source - ensure camera index is integer
@@ -296,7 +357,10 @@ def main():
     finally:
         # Return to idle state
         logging.info("Returning to IDLE state...")
-        controller.set_mix_fader(0.0)
+        controller.set_sequence(0.0)
+        
+        # Clean up resources
+        controller.cleanup()
         
         if args.show:
             cv2.destroyAllWindows()
