@@ -8,13 +8,13 @@
 git lfs install
 ```
 
-**VPT8 Download:**
-Download VPT8 Mac version (Intel build) from the official website. **Do not use** the Silicon beta version.
+**HeavyM Download:**
+Download HeavyM from the official website. The **Demo version works** with our MIDI integration!
 
 ### 1) Environment setup (virtualenv)
 ```bash
 # Navigate to your project directory
-cd /path/to/Halloween-Visions
+cd /path/to/Halloween-Visions-HeavyM
 
 # Create and activate a virtual environment (recommended)
 python3 -m venv .venv
@@ -25,104 +25,166 @@ pip install -r requirements.txt
 ```
 To leave the venv later: `deactivate`
 
-### 2) VPT8 version (critical)
-- ✅ Use **VPT8 Mac version** (Intel build under Rosetta) - Mix module works
-- ❌ **Do not use** VPT8 Silicon beta (Mix module broken) - applies to M2+ chips
-- ❓ **M1 chip compatibility** - not tested, use Intel build to be safe
+### 2) HeavyM Setup (MIDI Integration)
+- ✅ Use **HeavyM Demo** (free version with watermark)
+- ✅ **MIDI mapping** works in Demo version
+- ✅ No Pro license required for basic sequence control
 
-### 3) VPT8 crash prevention
-Remove the VIDDLL package (we removed it, not just renamed):
+### 3) macOS MIDI Configuration
+**Enable IAC Driver** (required for virtual MIDI):
+1. Open **Audio MIDI Setup** (Applications > Utilities)
+2. Window > **Show MIDI Studio**
+3. Double-click **IAC Driver**
+4. ✅ Check **"Device is online"**
+5. Add port named **"YOLO-HeavyM"** (optional)
+6. Click **Apply**
 
-**Option 1 (Terminal):**
+**Test MIDI setup:**
 ```bash
-rm -rf /Applications/VPT8.app/Contents/Resources/C74/packages/VIDDLL
+python setup_macos_midi.py
 ```
 
-**Option 2 (Finder - if you prefer GUI):**
-1. Open Finder
-2. Navigate to Applications → VPT8.app → Show Package Contents
-3. Go to Contents → Resources → C74 → packages
-4. Delete the VIDDLL folder
-Recommended project prefs (in your project's `prefs.txt`):
-```
-preview 0
-previewframerate 10
-framerate 15
-```
+### 4) HeavyM Project Setup
+**Create Sequences:**
+1. Create new sequence: **sleepseq** (idle/ambient content)
+2. Create new sequence: **scareseq** (scare/activation content)
+3. Ensure sequences are **not marked as Draft**
 
-### 4) VPT8 configuration
+**Configure MIDI Input:**
+1. **Preferences** > **Controls** > **MIDI**
+2. Select **"IAC Driver Bus 1"** or **"YOLO-HeavyM"** as input
+3. Enable **MIDI Learning** mode
+4. Click **sleepseq Play** button → Run: `python send_midi_test.py --sequence sleep`
+5. Click **scareseq Play** button → Run: `python send_midi_test.py --sequence scare`
+6. Disable **MIDI Learning** mode
 
-**VPT8 Window Layout:**
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ VPT8 WINDOW                                                     │
-├─────────────────────────────┬───────────────────────────────────┤
-│ LEFT PANEL                  │ RIGHT PANEL (Sources)             │
-│                             │                                   │
-│ 🎛️ Active Inspector:         │ Row 1: [1video] ← Video A        │
-│   - Layer settings          │ Row 2: [2video] ← Video B        │
-│   - Source: 8video          │ Row 8: [8mix] ← A/B Crossfader   │
-│   - Fade: 1.0              │                                   │
-│                             │ ──────────────────────────────── │
-│ 📺 Preview Window:          │ Layer: [gulvtekstur] ← Your layer│
-│   Shows final output        │                                   │
-│                             │                                   │
-├─────────────────────────────┴───────────────────────────────────┤
-│ BOTTOM BAR: blackout OFF | masterlevel > 0                     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Sources (right column):**
-- Row 1 = `1video` → load idle video → On + Loop
-- Row 2 = `2video` → load scare video → On + Loop
-- Row 8 = `mix` → On → **A=1video**, **B=2video**, **mode=mix**
-
-*📸 Screenshot needed: VPT8 row 8 mix setup (save as docs/images/vpt8-row8-mix-setup.png)*
-
-
-**Layer (active inspector):**
-- Select your layer (e.g., `layer_1` / `gulvtekstur`)
-- **Source = 8video**
-- **fade = 1.0**
-- Bottom bar: **blackout off**, masterlevel > 0
-
-*📸 Screenshot needed: VPT8 layer configuration (save as docs/images/vpt8-layer-config.png)*
-
-
-**Note:** With the working Intel build, the **row 8 mix thumbnail is reliable** and tracks the mix slider.
-
-*📸 Screenshot needed: VPT8 mix thumbnail showing crossfade (save as docs/images/vpt8-mix-thumbnail.png)*
-
-
-### 5) OSC settings
-**VPT8 OSC Configuration:**
-- Open VPT8 → **osc** tab 
-- Set **receive port = 6666**
-- Enable **Monitor in** to see incoming messages
-
-*📸 Screenshot needed: VPT8 OSC monitor showing incoming messages (save as docs/images/vpt8-osc-monitor.png)*
-
-**What the bridge sends to VPT8:**
+### 5) Test the Integration
+**Test MIDI Connection:**
 ```bash
-# Priming commands (sent once on startup)
-/sources/1video/on 1
-/sources/2video/on 1
-/sources/8mix/on 1
+# Test both sequences
+python send_midi_test.py --sequence both
 
-# Crossfade commands (sent during hand detection)
-/sources/8mix/mix 0.0   # Idle state (show video A)
-/sources/8mix/mix 1.0   # Scare state (show video B)
+# Test individual sequences
+python send_midi_test.py --sequence sleep
+python send_midi_test.py --sequence scare
 ```
-The bridge sends float values 0.0–1.0 to smoothly crossfade between videos.
 
-### 6) Test + run
+**Test Hand Detection:**
 ```bash
-# Test OSC
-python scripts/test_osc_vpt.py
+# Run with camera preview
+python scripts/yolo_hand_scare_bridge.py --show
 
-# Optional sim
-python scripts/test_hand_detection_sim.py
-
-# Production
-python scripts/yolo_hand_scare_bridge.py        # or --show for preview
+# List available cameras
+python scripts/yolo_hand_scare_bridge.py --list-cameras
 ```
+
+### 6) Production Run
+```bash
+# MIDI mode (default, works with Demo)
+python scripts/yolo_hand_scare_bridge.py --show
+
+# OSC mode (for Pro users)
+python scripts/yolo_hand_scare_bridge.py --use-osc --show
+```
+
+## 🔧 Troubleshooting
+
+### MIDI Issues
+**"MIDI port not visible in HeavyM":**
+1. Restart HeavyM after enabling IAC Driver
+2. Check "Device is online" in Audio MIDI Setup
+3. Run `python test_midi_port.py` to verify port creation
+
+**"MIDI notes not triggering sequences":**
+1. Verify MIDI Learning mapped correct notes (60 & 61)
+2. Check sequences are not marked as Draft
+3. Test with `python send_midi_test.py --sequence both`
+
+### Camera Issues
+**"Cannot open camera":**
+```bash
+# Check available cameras
+python scripts/yolo_hand_scare_bridge.py --list-cameras
+
+# Try different camera indices
+python scripts/yolo_hand_scare_bridge.py --source 1 --show
+```
+
+**"Permission denied":**
+- Check macOS Camera permissions in System Preferences > Security & Privacy
+
+### Hand Detection Issues
+**"No hand detection":**
+- Lower confidence threshold: `--scare-conf 0.85`
+- Improve lighting conditions
+- Clean camera lens
+
+**"Too many false triggers":**
+- Raise confidence threshold: `--scare-conf 0.95`
+- Adjust camera angle to avoid background movement
+
+### HeavyM Issues
+**"Sequences not switching":**
+1. Verify sequence names exactly: **sleepseq** and **scareseq**
+2. Check MIDI mapping in Preferences > Controls > MIDI
+3. Ensure sequences are not in Draft mode
+
+**"Only scare sequence works":**
+- Check sleepseq Play button is mapped to Note 60 (C4)
+- Verify idle state is being triggered (check bridge logs)
+
+## 🎯 Demo Day Checklist
+
+**Before the Event:**
+- [ ] ✅ HeavyM installed and MIDI configured
+- [ ] ✅ IAC Driver enabled and working
+- [ ] ✅ Python environment activated
+- [ ] ✅ All dependencies installed
+- [ ] ✅ YOLO model (best.pt) in place
+- [ ] ✅ Camera permissions granted
+- [ ] ✅ Sequences created and mapped
+- [ ] ✅ MIDI communication tested
+
+**During Setup:**
+- [ ] ✅ Camera positioned and focused
+- [ ] ✅ Lighting optimized for detection
+- [ ] ✅ Hand detection tested and calibrated
+- [ ] ✅ Sequence transitions verified
+- [ ] ✅ Emergency stop procedures reviewed
+
+**Emergency Commands:**
+```bash
+# Stop bridge
+Ctrl+C
+
+# Test MIDI manually
+python send_midi_test.py --sequence both
+
+# Reset to idle
+python send_midi_test.py --sequence sleep
+
+# Debug mode
+python scripts/yolo_hand_scare_bridge.py --debug --show
+```
+
+## 🏆 Expected Performance
+
+**Hand Detection:**
+- **Accuracy**: 99%+ confidence threshold
+- **Speed**: 30+ FPS real-time processing
+- **Latency**: <100ms from detection to sequence trigger
+
+**MIDI Integration:**
+- **Reliability**: Virtual MIDI port auto-creation
+- **Compatibility**: Works with HeavyM Demo (free)
+- **Responsiveness**: Immediate sequence switching
+
+**System Requirements:**
+- **macOS**: 10.14+ (for IAC Driver support)
+- **Camera**: Built-in or USB camera
+- **Memory**: 4GB+ RAM for YOLO processing
+- **Storage**: 2GB+ for models and media
+
+---
+
+*This setup guide ensures reliable operation for Halloween demonstrations with HeavyM projection mapping! 🎃*
