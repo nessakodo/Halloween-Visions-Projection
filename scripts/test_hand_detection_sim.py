@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simulate Hand Detection for VPT8 Scare System
+Simulate Hand Detection for HeavyM Scare System
 - Simulates YOLO hand detection at various confidence levels
 - Triggers scare effect when confidence >= 90%
 - Tests the logic before integrating real YOLO
@@ -115,11 +115,11 @@ def interactive_test(controller):
             break
 
 def main():
-    print("Hand Detection Simulation for VPT8 Scare System")
+    print("Hand Detection Simulation for HeavyM Scare System")
     print("=" * 50)
     print(f"Confidence threshold: 90%")
     print(f"Scare duration: 2.0 seconds")
-    print(f"VPT8 OSC: {HOST}:{PORT}")
+    print(f"HeavyM OSC: {HOST}:{PORT}")
     print()
     
     controller = ScareController()
