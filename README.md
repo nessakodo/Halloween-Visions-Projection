@@ -70,30 +70,6 @@ python setup_macos_midi.py
 - **Performance optimized** for live demonstrations
 - **Emergency procedures** for troubleshooting
 
-## 📁 Project Structure
-
-```
-├── scripts/                           # 🚀 Production scripts
-│   └── yolo_hand_scare_bridge.py      # 🎯 Main production script (MIDI + OSC)
-├── send_midi_test.py                  # 🎹 MIDI testing utility
-├── setup_macos_midi.py                # 🍎 macOS MIDI configuration helper
-├── test_midi_port.py                  # 🔍 MIDI port diagnostics
-├── osc_listener.py                    # 📡 OSC monitoring (for Pro users)
-├── HEAVYM_MIDI_SETUP.md               # 📖 HeavyM setup guide
-├── media/                             # 🎥 Production media (stored with Git LFS)
-│   ├── scare_awake.mp4                # 😱 Scare effect video
-│   └── sleep_.mp4                     # 😴 Calm state video
-├── models/                            # 🧠 YOLO models organized
-│   ├── hand-detection/                # 🖐️ Fine-tuned hand models
-│   │   ├── best_final.pt              # Alternative versions
-│   │   ├── best_v2.pt                 # for testing
-│   │   └── best_v3.pt                 # and comparison
-│   └── general-detection/             # 🔍 General YOLO models
-│       ├── yolo11n.pt                 # YOLO11 nano
-│       └── yolov8n.pt                 # YOLO8 nano
-├── best.pt                            # 🎯 Current production model
-└── docs/DEMO_SETUP.md                 # 📖 Complete setup guide
-```
 
 ## ⚙️ Configuration
 
