@@ -58,6 +58,20 @@ Check our [TODO.md](TODO.md) for tasks marked by priority. Here are some beginne
 - Add configuration file support
 - Improve camera auto-discovery
 
+## Current TODOs
+
+**🚨 HIGH PRIORITY**:
+- **Fix grey border at top of OpenCV display** (simple_projection.py)
+  - Issue: Small grey border appears at top of projection window on macOS
+  - Impact: Affects projector output quality for Halloween setup
+  - Attempted solutions: Aspect ratio changes, window sizing, letterboxing
+  - Need: Alternative display method or OpenCV configuration to eliminate grey area
+
+**Medium Priority**:
+- Cross-platform testing (Windows/Linux)
+- Performance optimization for older hardware
+- Enhanced error handling and user feedback
+
 ## Code Standards
 
 - **Python**: Follow PEP 8 styling

@@ -173,24 +173,23 @@ class VLCProjectionController:
         logging.info("VLC resources cleaned up")
     
     def play_video(self, video_path, loop=True):
-        """Play video in fullscreen"""
+        """Play video using VLC app directly"""
         with self.lock:
             if not os.path.exists(video_path):
                 logging.error(f"❌ Video file not found: {video_path}")
                 return False
             
             try:
-                # Create media
-                media = self.instance.media_new(video_path)
-                if loop:
-                    # Set media to loop
-                    media.add_option('input-repeat=-1')  # Loop indefinitely
+                # Close any existing VLC
+                import subprocess
+                subprocess.run(['pkill', 'VLC'], capture_output=True)
+                time.sleep(0.2)
                 
-                # Set media and play
-                self.player.set_media(media)
-                self.player.set_fullscreen(True)
-                self.player.play()
+                # Launch VLC using macOS open command
+                abs_path = os.path.abspath(video_path)
+                cmd = ['open', '-a', 'VLC', abs_path]
                 
+                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 logging.info(f"🎬 Playing: {os.path.basename(video_path)}")
                 return True
                 
