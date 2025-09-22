@@ -88,15 +88,16 @@ class SimpleProjectionController:
         logging.info(f"🔄 Switched to {mode} mode")
         return self.debug_mode
     
-    def create_debug_display(self, camera_frame, video_frame, class_name, confidence):
+    def create_debug_display(self, camera_frame, video_frame, class_name, confidence, model_name="best.pt"):
         """Create debug display with camera feed and info overlay"""
         # Resize camera frame for corner display
         cam_h, cam_w = camera_frame.shape[:2]
         scale = 0.3
         small_cam = cv2.resize(camera_frame, (int(cam_w * scale), int(cam_h * scale)))
         
-        # Use video frame as background
-        display = video_frame.copy()
+        # Use video frame as background - ensure it's the right size
+        display_h, display_w = camera_frame.shape[:2]  # Use camera resolution
+        display = cv2.resize(video_frame, (display_w, display_h))
         
         # Overlay camera feed in top-right corner
         cam_h_small, cam_w_small = small_cam.shape[:2]
@@ -135,6 +136,10 @@ class SimpleProjectionController:
         cv2.putText(display, f"Threshold: {self.confidence_threshold:.0%}", 
                    (20, info_y + 100), font, font_scale, (255, 255, 255), thickness)
         
+        # Model info
+        cv2.putText(display, f"Model: {model_name}", 
+                   (20, info_y + 150), font, font_scale, (255, 255, 255), thickness)
+        
         # Instructions
         cv2.putText(display, "Press 'D' to toggle debug/projection mode", 
                    (20, display_h - 100), font, 0.8, (255, 255, 255), 2)
@@ -144,6 +149,28 @@ class SimpleProjectionController:
                    (20, display_h - 20), font, 0.8, (255, 255, 255), 2)
         
         return display
+    
+    def create_black_background_display(self, content_frame, target_size):
+        """Create a black background and center the content to eliminate grey borders"""
+        target_h, target_w = target_size
+        content_h, content_w = content_frame.shape[:2]
+        
+        # Create pure black background at target size
+        black_bg = np.zeros((target_h, target_w, 3), dtype=np.uint8)
+        
+        # Calculate centering offsets
+        y_offset = max(0, (target_h - content_h) // 2)
+        x_offset = max(0, (target_w - content_w) // 2)
+        
+        # Ensure content fits within target size
+        fit_h = min(content_h, target_h)
+        fit_w = min(content_w, target_w)
+        
+        # Place content in center of black background
+        black_bg[y_offset:y_offset + fit_h, x_offset:x_offset + fit_w] = content_frame[:fit_h, :fit_w]
+        
+        return black_bg
+    
 
 def main():
     parser = argparse.ArgumentParser(description="Simple Halloween Hand Detection Projection")
@@ -216,47 +243,57 @@ def main():
             if video_frame is None:
                 continue
             
-            # Resize video frame to match camera resolution for consistency
-            video_frame = cv2.resize(video_frame, (camera_frame.shape[1], camera_frame.shape[0]))
+            # Resize video frame to exactly match camera resolution, adding extra height to eliminate grey
+            cam_h, cam_w = camera_frame.shape[:2]
+            # Add 15% extra height to ensure no grey top border
+            extended_h = int(cam_h * 1.15)
+            video_frame = cv2.resize(video_frame, (cam_w, extended_h))
             
-            # Run YOLO detection on camera frame
-            results = model.predict(camera_frame, conf=0.3, verbose=False)
+            # Crop from bottom to keep original height but eliminate grey at top
+            video_frame = video_frame[:cam_h, :]
+            
+            # Run YOLO classification on camera frame
+            results = model.predict(camera_frame, verbose=False)
             
             class_name = "not_hand"
             confidence = 0.0
             
             if results and len(results) > 0:
                 result = results[0]
-                if result.boxes is not None and len(result.boxes) > 0:
-                    confidences = result.boxes.conf.cpu().numpy()
-                    classes = result.boxes.cls.cpu().numpy()
-                    max_idx = confidences.argmax()
-                    confidence = confidences[max_idx]
-                    class_name = model.names[int(classes[max_idx])]
-                    
-                    # Debug: print detection every 30 frames
-                    import time
-                    if not hasattr(controller, 'frame_count'):
-                        controller.frame_count = 0
-                    controller.frame_count += 1
-                    if controller.frame_count % 30 == 0:
-                        logging.info(f"🔍 Detection: {class_name} ({confidence:.1%})")
+                # Handle classification results (not detection)
+                if hasattr(result, 'probs') and result.probs is not None:
+                    # Classification model - get class probabilities
+                    probs = result.probs.data.cpu().numpy()
+                    max_idx = probs.argmax()
+                    confidence = probs[max_idx]
+                    class_name = model.names[int(max_idx)]
                 else:
-                    # No detections
-                    if not hasattr(controller, 'frame_count'):
-                        controller.frame_count = 0
-                    controller.frame_count += 1
-                    if controller.frame_count % 60 == 0:
-                        logging.info("🔍 No detections found")
+                    # Fallback: try to get from names/classes if available
+                    try:
+                        # Sometimes classification results are in different format
+                        class_name = "not_hand"
+                        confidence = 0.5
+                    except:
+                        pass
+                
+                # Debug: print classification every 30 frames
+                if not hasattr(controller, 'frame_count'):
+                    controller.frame_count = 0
+                controller.frame_count += 1
+                if controller.frame_count % 30 == 0:
+                    logging.info(f"🔍 Classification: {class_name} ({confidence:.1%})")
             
             # Process detection
             controller.process_hand_detection(class_name, confidence)
             
-            # Create display
+            # Create display with black background to eliminate grey
             if controller.debug_mode:
-                display_frame = controller.create_debug_display(camera_frame, video_frame, class_name, confidence)
+                display_frame = controller.create_debug_display(camera_frame, video_frame, class_name, confidence, args.model)
             else:
                 display_frame = video_frame
+            
+            # Create black background and center the content to eliminate grey top border
+            display_frame = controller.create_black_background_display(display_frame, camera_frame.shape[:2])
             
             # Show frame
             cv2.imshow(window_name, display_frame)
