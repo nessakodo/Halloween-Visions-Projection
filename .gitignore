@@ -40,8 +40,7 @@ wheels/
 !docs/images/*.jpg
 !docs/images/*.gif
 
-# Model files (large)
-*.pt
+# Model files (large) - Note: .pt files now tracked via Git LFS
 *.pth
 *.weights
 *.onnx
@@ -75,4 +74,3 @@ temp/
 .claude/
 
 # Development files
-CHANGELOG.md
