@@ -50,20 +50,6 @@ python simple_projection.py --source 0 --conf 0.5
 - **Automatic initialization** with USB camera retry logic
 - **Live preview** in debug mode
 
-## 📁 Project Structure
-
-```
-Halloween-Visions-Projection/
-├── simple_projection.py          # 🎯 MAIN PROJECTION SCRIPT
-├── videos/
-│   ├── sleeping_face.mp4         # Idle/calm video
-│   └── angry_face.mp4            # Scare/alert video  
-├── Colin1.pt                     # Trained YOLO hand detection model
-├── requirements.txt              # Python dependencies
-├── CHANGELOG.md                  # Development history
-└── CONTRIBUTING.md               # Development guidelines
-```
-
 ## ⚙️ Configuration
 
 ### Command Line Options
@@ -95,7 +81,7 @@ python simple_projection.py --source 1 --conf 0.5
 ## 🎃 Halloween Production Setup
 
 ### Recommended Workflow
-1. **Connect projector** to laptop (HDMI/USB-C)
+1. **Connect projector** to laptop (HDMI Etc.)
 2. **Set up mirrored display** (System Preferences → Displays)
 3. **Run projection system**:
    ```bash
@@ -159,30 +145,25 @@ python simple_projection.py --source 0 --conf 0.3
 
 ### Display Issues
 - **Grey border at top**: Known OpenCV/macOS limitation, doesn't affect projector output
-- **Video not switching**: Check YOLO model confidence in debug mode
-- **Fullscreen issues**: Try toggling F key or restart in fullscreen mode
 
 ## 📊 Performance Notes
 
 - **Hand detection**: 30+ FPS real-time processing
-- **Video switching**: Instant response (< 100ms)
-- **Memory usage**: ~200MB with YOLO model loaded
-- **CPU usage**: Moderate (single-threaded YOLO inference)
+TODO - Test on different hardware
 
 ## 🎯 Production Status
 
 **🎃 READY FOR HALLOWEEN (with workaround)**
 - Core functionality: 100% working
 - Hand detection: Accurate and responsive  
-- Video switching: Seamless
+- Video switching: Functional
 - Camera support: Multi-camera tested
-- Projection: Compatible with all projectors
+TODO - Projection: Compatible with all projectors ???
 
 **⚠️ Known Issue**: Grey border at top of display (see CONTRIBUTING.md for TODO)
-**Workaround**: Use mirrored display or position projector to crop grey area
+**Workaround**: Position projector to crop grey area
 
 ---
 
 **🎃 Ready to scare some trick-or-treaters! 👻**
 
-For issues or improvements, see `CHANGELOG.md` for development history.
