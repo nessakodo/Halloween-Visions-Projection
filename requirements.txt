@@ -1,5 +1,6 @@
 ultralytics>=8.0.0
 opencv-python>=4.0.0
+python-vlc>=3.0.0
 python-osc>=1.8.0
 mido>=1.2.0
 python-rtmidi>=1.4.0
