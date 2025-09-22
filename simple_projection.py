@@ -29,6 +29,7 @@ class SimpleProjectionController:
         self.scare_duration = 2.0
         self.last_trigger = 0.0
         self.debug_mode = True
+        self.production_mode = False
         
         # Load videos
         self.sleep_cap = cv2.VideoCapture(video_sleep_path)
@@ -88,6 +89,13 @@ class SimpleProjectionController:
         logging.info(f"🔄 Switched to {mode} mode")
         return self.debug_mode
     
+    def toggle_production_mode(self):
+        """Toggle production mode for different aspect ratios"""
+        self.production_mode = not self.production_mode
+        mode = "PRODUCTION" if self.production_mode else "NORMAL"
+        logging.info(f"🔄 Switched to {mode} display mode")
+        return self.production_mode
+    
     def create_debug_display(self, camera_frame, video_frame, class_name, confidence, model_name="best.pt"):
         """Create debug display with camera feed and info overlay"""
         # Resize camera frame for corner display
@@ -142,34 +150,30 @@ class SimpleProjectionController:
         
         # Instructions
         cv2.putText(display, "Press 'D' to toggle debug/projection mode", 
-                   (20, display_h - 100), font, 0.8, (255, 255, 255), 2)
-        cv2.putText(display, "Press 'Q' or ESC to quit", 
-                   (20, display_h - 60), font, 0.8, (255, 255, 255), 2)
+                   (20, display_h - 120), font, 0.7, (255, 255, 255), 2)
+        cv2.putText(display, "Press 'P' for production mode (grey fix)", 
+                   (20, display_h - 90), font, 0.7, (255, 255, 255), 2)
         cv2.putText(display, "Press 'F' for fullscreen", 
-                   (20, display_h - 20), font, 0.8, (255, 255, 255), 2)
+                   (20, display_h - 60), font, 0.7, (255, 255, 255), 2)
+        cv2.putText(display, "Press 'Q' or ESC to quit", 
+                   (20, display_h - 30), font, 0.7, (255, 255, 255), 2)
         
         return display
     
-    def create_black_background_display(self, content_frame, target_size):
-        """Create a black background and center the content to eliminate grey borders"""
-        target_h, target_w = target_size
-        content_h, content_w = content_frame.shape[:2]
+    
+    def create_production_display(self, video_frame):
+        """Create production display with different sizing to minimize grey border"""
+        h, w = video_frame.shape[:2]
         
-        # Create pure black background at target size
-        black_bg = np.zeros((target_h, target_w, 3), dtype=np.uint8)
+        # Try stretching the video slightly taller to fill potential grey space
+        stretched_h = int(h * 1.1)
+        production_frame = cv2.resize(video_frame, (w, stretched_h))
         
-        # Calculate centering offsets
-        y_offset = max(0, (target_h - content_h) // 2)
-        x_offset = max(0, (target_w - content_w) // 2)
+        # Crop back to original height from the middle
+        crop_start = (stretched_h - h) // 2
+        production_frame = production_frame[crop_start:crop_start + h, :]
         
-        # Ensure content fits within target size
-        fit_h = min(content_h, target_h)
-        fit_w = min(content_w, target_w)
-        
-        # Place content in center of black background
-        black_bg[y_offset:y_offset + fit_h, x_offset:x_offset + fit_w] = content_frame[:fit_h, :fit_w]
-        
-        return black_bg
+        return production_frame
     
 
 def main():
@@ -219,6 +223,7 @@ def main():
     logging.info(f"Confidence threshold: {args.conf:.0%}")
     logging.info("🎮 Controls:")
     logging.info("  D = Toggle Debug/Projection mode")
+    logging.info("  P = Toggle Production mode (grey border fix)")
     logging.info("  F = Toggle fullscreen")
     logging.info("  Q/ESC = Quit")
     logging.info("-" * 60)
@@ -286,14 +291,13 @@ def main():
             # Process detection
             controller.process_hand_detection(class_name, confidence)
             
-            # Create display with black background to eliminate grey
+            # Create display based on mode
             if controller.debug_mode:
                 display_frame = controller.create_debug_display(camera_frame, video_frame, class_name, confidence, args.model)
+            elif controller.production_mode:
+                display_frame = controller.create_production_display(video_frame)
             else:
                 display_frame = video_frame
-            
-            # Create black background and center the content to eliminate grey top border
-            display_frame = controller.create_black_background_display(display_frame, camera_frame.shape[:2])
             
             # Show frame
             cv2.imshow(window_name, display_frame)
@@ -304,6 +308,8 @@ def main():
                 break
             elif key in [ord('d'), ord('D')]:  # Toggle debug mode
                 controller.toggle_debug_mode()
+            elif key in [ord('p'), ord('P')]:  # Toggle production mode
+                controller.toggle_production_mode()
             elif key in [ord('f'), ord('F')]:  # Toggle fullscreen
                 current_state = cv2.getWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN)
                 if current_state == cv2.WINDOW_FULLSCREEN:
