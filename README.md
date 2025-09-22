@@ -58,10 +58,10 @@ Halloween-Visions-Projection/
 ├── videos/
 │   ├── sleeping_face.mp4         # Idle/calm video
 │   └── angry_face.mp4            # Scare/alert video  
-├── best.pt                       # Trained YOLO hand detection model
+├── Colin1.pt                     # Trained YOLO hand detection model
 ├── requirements.txt              # Python dependencies
 ├── CHANGELOG.md                  # Development history
-└── MORNING_HANDOFF.md            # Setup documentation
+└── CONTRIBUTING.md               # Development guidelines
 ```
 
 ## ⚙️ Configuration
@@ -130,7 +130,7 @@ pip install -r requirements.txt
 - `python-vlc>=3.0.0` - VLC integration (legacy system)
 
 ### Model Details
-- **File**: `best.pt` (trained YOLO classification model)
+- **File**: `Colin1.pt` (trained YOLO classification model)
 - **Classes**: `{0: 'hand', 1: 'not_hand'}`
 - **Input**: Camera frame (any resolution)
 - **Output**: Classification confidence (0.0-1.0)

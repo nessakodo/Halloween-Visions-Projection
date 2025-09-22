@@ -243,7 +243,7 @@ class VLCProjectionController:
 
 def parse_args():
     p = argparse.ArgumentParser(description="YOLO Hand Detection → VLC Video Projection")
-    p.add_argument("--model", default="best.pt", help="YOLO model file (hand detection)")
+    p.add_argument("--model", default="Colin1.pt", help="YOLO model file (hand detection)")
     p.add_argument("--source", default=0, help="Camera index (0=built-in, 1=external, etc.) or video file")
     p.add_argument("--list-cameras", action="store_true", help="List available cameras and exit")
     p.add_argument("--list-displays", action="store_true", help="List available displays and exit")
