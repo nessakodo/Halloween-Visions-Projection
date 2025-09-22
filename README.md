@@ -1,197 +1,211 @@
-# Halloween Hand Detection Projection System 🎃👻
+# Halloween Hand Detection → VLC Direct Projection 🎃🎬
 
-## Quick start
-1) Install **Git LFS** for video file support: `git lfs install`
-2) Create and activate a Python virtualenv (see DEMO_SETUP.md)  
-3) Install requirements: `pip install -r requirements.txt`
-4) Use **HeavyM** projection mapping software (Demo version works!)
-5) Run the YOLO→HeavyM bridge
+**Simple, reliable projection system using python-vlc for direct video playback**
 
-### HeavyM Setup (MIDI Integration)
-- **MIDI Mode**: Works with HeavyM Demo (free version)
-- Create sequences: **sleepseq** (idle/ambient) and **scareseq** (scare content)
-- Enable MIDI input in **Preferences > Controls > MIDI**
-- Use **MIDI Learning** to map:
-  - **Note 60 (C4)** → sleepseq Play button
-  - **Note 61 (C#4)** → scareseq Play button
+## 🚀 Quick Start
 
-### Run
+### 1. Install Prerequisites
 ```bash
-python scripts/yolo_hand_scare_bridge.py --show   # MIDI mode (default)
-python scripts/yolo_hand_scare_bridge.py --use-osc --show   # OSC mode (Pro only)
+# Install VLC Media Player from videolan.org
+# Download and install VLC for your platform
+
+# Install Python dependencies
+pip install -r requirements.txt
 ```
 
-### 🎹 MIDI Integration (Demo Compatible)
+### 2. Setup Videos
 ```bash
-# Test MIDI connection
-python send_midi_test.py --sequence both
+# Create video directory
+python test_vlc_playback.py --create-test-videos
 
-# Setup macOS MIDI (if needed)
-python setup_macos_midi.py
+# Add your video files to videos/ directory:
+# - sleeping_face.mp4 (idle/calm content)
+# - angry_face.mp4 (scare/alert content)
 ```
 
-**Problem Solved**: HeavyM Demo's OSC API limitation → MIDI mapping solution
-**macOS Issue**: Virtual MIDI ports → IAC Driver integration
+### 3. Test & Run
+```bash
+# Test camera
+python scripts/yolo_vlc_projection.py --list-cameras
 
-### 🎥 Visual Setup Guide
-**See [HeavyM MIDI Setup Guide](HEAVYM_MIDI_SETUP.md) for complete configuration**
+# Test with preview window
+python scripts/yolo_vlc_projection.py --show
+
+# Run fullscreen on projector (replace 1 with your projector display)
+python scripts/yolo_vlc_projection.py --fullscreen-display 1
+```
 
 ## 🎬 How It Works
 
 1. **Camera** captures real-time video feed
-2. **YOLO model** classifies frames for hand presence (99% confidence threshold)
-3. **MIDI messages** trigger HeavyM sequence changes
-4. **HeavyM sequences** switch between idle and scare content
-5. **Projection** shows seamless transition from calm to scary content
+2. **YOLO model** detects hand presence (99% confidence threshold)
+3. **VLC player** switches between idle and scare videos instantly
+4. **Fullscreen projection** displays seamlessly on projector
 
-## ✨ Features
+## ✨ Key Features
 
 ### 🖐️ Hand Detection
-- **Fine-tuned YOLO model** (`best.pt`) for accurate hand classification
+- **Fine-tuned YOLO model** for accurate hand classification
 - **99% confidence threshold** prevents false positives
 - **Real-time processing** at 30+ FPS
-- **Any camera resolution** supported (auto-resized)
+- **Debounce logic** prevents video flickering
 
-### 📷 Camera Selection
-- **Automatic camera discovery** - scan for available cameras
-- **Flexible source selection** - built-in, external, or video files
-- **Easy switching** between laptop and USB cameras
-- **Preview mode** to test camera positioning and detection
+### 🎥 Direct Video Projection
+- **VLC-powered playback** - reliable and cross-platform
+- **Instant video switching** between idle and scare content
+- **Fullscreen projection** on specified display
+- **Looping videos** for continuous content
+- **Any video format** supported by VLC
 
-### 🎥 HeavyM Integration  
-- **MIDI sequence control** compatible with Demo version
-- **Dual mode support** - MIDI (default) or OSC (Pro)
-- **Virtual MIDI port** creation for seamless integration
-- **2-second scare duration** with automatic return to idle
+### 📷 Camera Support
+- **Multi-camera detection** - built-in, USB, or video files
+- **Automatic fallback** if primary camera fails
+- **Live preview window** for setup and monitoring
 
-### 🔧 Production Ready
-- **Comprehensive testing** with simulation and real detection
-- **Robust error handling** and state management
-- **Performance optimized** for live demonstrations
-- **Emergency procedures** for troubleshooting
+## 📁 Project Structure
 
+```
+Halloween-Visions-VLC/
+├── scripts/
+│   └── yolo_vlc_projection.py    # Main projection script
+├── videos/                       # Video content directory
+│   ├── sleeping_face.mp4         # Idle/calm video
+│   ├── angry_face.mp4            # Scare/alert video
+│   └── README.md                 # Video setup guide
+├── test_vlc_playback.py          # VLC testing utility
+├── VLC_PROJECTION_SETUP.md       # Complete setup guide
+├── best.pt                       # YOLO hand detection model
+└── requirements.txt              # Python dependencies
+```
 
 ## ⚙️ Configuration
 
-### Main Script Options
+### Basic Usage
 ```bash
-python scripts/yolo_hand_scare_bridge.py [OPTIONS]
+python scripts/yolo_vlc_projection.py [OPTIONS]
 
---model           YOLO model file (default: best.pt)
---source          Camera index (0=built-in, 1=external) or video file (default: 0)
---list-cameras    List available cameras and exit
---scare-conf      Confidence threshold for scare (default: 0.90)
---scare-duration  Scare duration in seconds (default: 2.0)
---use-midi        Use MIDI output (default: True for Demo compatibility)
---use-osc         Use OSC output instead of MIDI (for Pro version)
---show            Display detection window with confidence overlay
---debug           Enable verbose logging
+--source              Camera index (0, 1, 2...) or video file
+--video-sleep         Path to idle video (default: videos/sleeping_face.mp4)
+--video-scare         Path to scare video (default: videos/angry_face.mp4)
+--fullscreen-display  Display index for projector (default: windowed)
+--scare-conf          Hand confidence threshold (default: 0.99)
+--scare-duration      Scare duration in seconds (default: 2.0)
+--show               Show camera preview window
 ```
 
-### Camera Selection Examples
+### Display Setup
 ```bash
-# Discover cameras
-python scripts/yolo_hand_scare_bridge.py --list-cameras
+# Find projector display index
+python scripts/yolo_vlc_projection.py --list-displays
 
-# Use built-in laptop camera
-python scripts/yolo_hand_scare_bridge.py --source 0 --show
+# Example outputs:
+# 0: Main Display
+# 1: Secondary Display (projector)
 
-# Use external USB camera
-python scripts/yolo_hand_scare_bridge.py --source 1 --show
-
-# Use video file for testing
-python scripts/yolo_hand_scare_bridge.py --source /path/to/video.mp4 --show
+# Use display 1 for fullscreen projection
+python scripts/yolo_vlc_projection.py --fullscreen-display 1
 ```
 
-### HeavyM Setup
-- **MIDI Input**: Enable in Preferences > Controls > MIDI
-- **Sequences**: Create sleepseq (idle) and scareseq (scare)
-- **MIDI Learning**: Map Note 60 → sleepseq, Note 61 → scareseq
-- **Virtual Port**: "YOLO-HeavyM Bridge" (auto-created)
+### Video Requirements
+- **Format**: MP4 recommended (any VLC-supported format works)
+- **Resolution**: Any resolution (VLC auto-scales)
+- **Duration**: Any length (loops automatically)
+- **Content**: 
+  - Idle video: Calm, ambient content
+  - Scare video: Jump scares, scary faces
 
-## 🔧 Technical Details
+## 🛠️ Testing & Troubleshooting
 
-### Hand Detection Model
-- **Type**: Classification (hand vs not_hand)
-- **Classes**: 2 classes with 100% validation accuracy
-- **Architecture**: Fine-tuned YOLO for hand detection
-- **Performance**: 30+ FPS real-time processing
+### Test VLC Setup
+```bash
+# Test basic VLC functionality
+python test_vlc_playback.py --video videos/sleeping_face.mp4
 
-### HeavyM Integration
-- **MIDI Mode**: Note 60 (C4) = sleepseq, Note 61 (C#4) = scareseq
-- **OSC Mode**: `/sequences/sleepseq/play 1.0` and `/sequences/scareseq/play 1.0`
-- **Dual Support**: Automatic fallback between MIDI and OSC
-- **Port Creation**: Virtual MIDI port for seamless connection
-
-### State Machine
-```
-IDLE (Note 60) → Hand Detection (≥99% conf) → SCARE (Note 61)
-     ↑                                              ↓
-     ←←← Automatic Return (after 2 seconds) ←←←←←←←←
+# Test fullscreen on projector
+python test_vlc_playback.py --video videos/sleeping_face.mp4 --fullscreen --display 1
 ```
 
-## 🛠️ Troubleshooting
+### Common Issues
 
-### Camera Issues
-- **"Cannot open camera"**: Run `--list-cameras` to see available options
-- **Wrong camera**: Try `--source 1`, `--source 2`, etc.
-- **Permission denied**: Check macOS Camera permissions in System Preferences
-- **USB camera not working**: Unplug/replug, try different USB port
+**VLC not found**: Install VLC from videolan.org
+**No video files**: Run `--create-test-videos` and add your content
+**Wrong display**: Use `--list-displays` to find projector index
+**Camera issues**: Use `--list-cameras` to see available options
 
-### Detection Issues  
-- **No hand detection**: Lower `--scare-conf 0.85` or improve lighting
-- **False triggers**: Increase `--scare-conf 0.95` or adjust camera angle
-- **Poor accuracy**: Ensure good lighting, clean camera lens
+### Performance Tips
+- Use SSD storage for video files
+- Test with actual lighting conditions
+- Calibrate confidence threshold for your environment
+- Close unnecessary applications during projection
 
-### MIDI Issues
-- **Port not visible**: Enable IAC Driver in Audio MIDI Setup (macOS)
-- **MIDI not working**: Run `python setup_macos_midi.py` for configuration
-- **HeavyM not responding**: Check MIDI Learning mapping in Preferences
+## 🆚 Advantages Over Mapping Software
 
-### HeavyM Issues
-- **Sequences not switching**: Verify MIDI mapping and sequence names
-- **Only scare works**: Ensure sleepseq Play button is mapped to Note 60
-- **No MIDI input**: Check "Device is online" in IAC Driver settings
+### ✅ Simplicity
+- **No external mapping software** required
+- **No complex setup** or configuration
+- **Direct video file playback**
 
-### Emergency Procedures
-- **Stop script**: Press Ctrl+C
-- **Test MIDI**: Run `python send_midi_test.py --sequence both`
-- **Reset sequences**: Manually trigger sequences in HeavyM
+### ✅ Reliability
+- **Fewer dependencies** = fewer failure points
+- **VLC's proven stability** for video playback
+- **Cross-platform compatibility**
+
+### ✅ Flexibility
+- **Any video format** supported by VLC
+- **Easy content updates** - just replace video files
+- **Full programmatic control** over playback
+
+### ✅ Cost Effective
+- **Free and open source** - no licensing costs
+- **Works with any projector** - no specialized hardware
+
+## 🔮 Future Extensions
+
+### Multiple Hand Signs (Stretch Goal)
+The system can be extended to recognize different hand signs:
+```python
+# Example: Different scares for different gestures
+sign_mapping = {
+    'open_hand': 'videos/scare_1.mp4',
+    'closed_fist': 'videos/scare_2.mp4',
+    'peace_sign': 'videos/scare_3.mp4'
+}
+```
+
+### Advanced Features
+- **Multiple video sequences** for varied content
+- **Audio integration** for sound effects
+- **Interactive modes** with user controls
+- **Web interface** for remote monitoring
 
 ## 📖 Documentation
 
-- **[HeavyM MIDI Setup Guide](HEAVYM_MIDI_SETUP.md)** - Complete HeavyM configuration
-- **[Complete Setup Guide](docs/DEMO_SETUP.md)** - Detailed configuration and troubleshooting
-- **[Development History](CHANGELOG.md)** - Full development timeline and technical decisions
-
-### Problems Solved
-1. **HeavyM Demo OSC Limitation** → MIDI mapping solution (Note 60/61)
-2. **macOS Virtual MIDI Issues** → IAC Driver integration  
-3. **Port Conflicts** → Unified MIDI/OSC dual-mode approach
+- **[VLC Projection Setup Guide](VLC_PROJECTION_SETUP.md)** - Complete configuration
+- **[YOLO Model Details](CHANGELOG.md)** - Hand detection technical info
+- **[Video Content Guide](videos/README.md)** - Content creation tips
 
 ## 🎯 Demo Day Checklist
 
-- [ ] ✅ HeavyM MIDI input enabled
-- [ ] ✅ IAC Driver configured (macOS) 
-- [ ] ✅ Hand detection model tested and calibrated
-- [ ] ✅ MIDI communication verified
-- [ ] ✅ Sequences created and mapped
-- [ ] ✅ Camera positioned and lighting optimized
-- [ ] ✅ Emergency procedures reviewed
+- [ ] ✅ VLC installed and tested
+- [ ] ✅ Videos created and placed in videos/ directory  
+- [ ] ✅ Projector connected as extended display
+- [ ] ✅ Camera positioned and calibrated
+- [ ] ✅ Hand detection threshold tested
+- [ ] ✅ Fullscreen projection verified on correct display
+- [ ] ✅ Emergency stop procedure (Ctrl+C) practiced
 
 ## 🏆 Status: Production Ready
 
-The Halloween hand detection projection system is **fully operational** and **HeavyM compatible**. Real-time hand detection successfully triggers scare effects through HeavyM projection mapping using MIDI integration.
+The VLC-based Halloween projection system is **fully operational** and **deployment ready**. This approach provides a simpler, more reliable alternative to mapping software while maintaining all core functionality.
 
 **Key Achievements:**
-- ✅ **HeavyM Demo compatibility** (free version works!)
-- ✅ **MIDI bridge implementation** (virtual port creation)
+- ✅ **VLC direct projection** (no mapping software needed)
+- ✅ **Cross-platform compatibility** (Mac, Windows, Linux)
+- ✅ **Instant video switching** (seamless transitions)
 - ✅ **Accurate hand detection** (99% confidence)
-- ✅ **Smooth sequence transitions** 
-- ✅ **Real-time performance** (30+ FPS)
-- ✅ **Comprehensive documentation**
+- ✅ **Fullscreen projection** (multi-display support)
+- ✅ **Simple setup** (minimal dependencies)
 
 ---
 
-*Built with YOLO, HeavyM, and lots of Halloween spirit! From the ML Visions Projects DenHac Halloween Crew!
-Special Thanks to Mike CodeZero and Patrick Cromer for their efforts 🎃*
+*Built with YOLO, VLC, and Halloween spirit! A simpler approach to spooky projections! 🎃👻*
