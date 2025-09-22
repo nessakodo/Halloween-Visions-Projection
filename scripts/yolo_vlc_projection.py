@@ -354,12 +354,24 @@ def main():
                 logging.error("   • Ensure no other app is using the camera")
                 return 1
             
-        # Test camera by reading a frame
+        # Test camera by reading a frame (with USB camera initialization delay)
+        if isinstance(src, int) and src > 0:
+            logging.info("⏳ Initializing USB camera...")
+            time.sleep(2)  # Give USB cameras time to initialize
+        
         ret, test_frame = cap.read()
         if not ret:
-            logging.error(f"❌ Camera {src} opened but cannot read frames")
-            logging.error("💡 Try a different camera or check camera connection")
-            return 1
+            # Try a few more times for USB cameras
+            for attempt in range(3):
+                logging.info(f"🔄 Camera initialization attempt {attempt + 2}...")
+                time.sleep(1)
+                ret, test_frame = cap.read()
+                if ret:
+                    break
+            else:
+                logging.error(f"❌ Camera {src} opened but cannot read frames")
+                logging.error("💡 Try a different camera or check camera connection")
+                return 1
             
         logging.info(f"✅ Camera {src} opened successfully ({test_frame.shape[1]}x{test_frame.shape[0]})")
         
