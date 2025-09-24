@@ -21,14 +21,16 @@ wheels/
 .installed.cfg
 *.egg
 
-# Media files (large)
-*.mp4
+# Media files (large) - except videos/ folder which uses Git LFS
 *.avi
 *.mov
 *.wmv
 *.flv
 *.webm
 *.mkv
+
+# Allow MP4 files in videos/ folder (tracked by Git LFS)
+!videos/*.mp4
 
 # Large images (but allow documentation images)
 *.tiff
