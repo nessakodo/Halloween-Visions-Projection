@@ -101,16 +101,36 @@ python simple_projection.py --source 1 --conf 0.5
 ## 🛠️ Technical Details
 
 ### System Requirements
-- **macOS** (tested on Darwin 24.6.0)
+- **macOS** (tested on Darwin 24.6.0 / Sequoia 15.6.1)
 - **Python 3.11+**
+- **Git LFS** (for model and video files)
 - **VLC Media Player** (installed separately)
 - **USB camera** or built-in camera
 - **Projector** or external display
 
-### Dependencies
-```bash
-pip install -r requirements.txt
-```
+### Installation
+1. **Install Git LFS** (required for model and video files):
+   ```bash
+   # macOS
+   brew install git-lfs
+   
+   # Ubuntu/Debian  
+   sudo apt install git-lfs
+   
+   # Windows: Download from git-lfs.github.io
+   ```
+
+2. **Clone repository with LFS files**:
+   ```bash
+   git clone https://github.com/12mv2/Halloween-Visions-Projection.git
+   cd Halloween-Visions-Projection
+   git lfs pull  # Download LFS files (Colin1.pt, videos)
+   ```
+
+3. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 - `ultralytics>=8.0.0` - YOLO model inference
 - `opencv-python>=4.0.0` - Video processing and display
 - `python-vlc>=3.0.0` - VLC integration (legacy system)
